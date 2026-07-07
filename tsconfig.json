@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    /* Target & Environment */
+    "target": "ES2022",                          /* Specify ECMAScript target version */
+    "module": "NodeNext",                        /* Specify module code generation */
+    "moduleResolution": "NodeNext",              /* Validate output to match Node.js requirements */
+    "lib": ["ES2022"],                           /* Specify library files to be included in the compilation */
+
+    /* Directories */
+    "rootDir": "./src",                          /* Specify the root folder of input files */
+    "outDir": "./dist",                          /* Redirect output structure to the directory */
+
+    /* Compliance & Interop */
+    "esModuleInterop": true,                     /* Emits additional JavaScript to ease importing CommonJS modules */
+    "forceConsistentCasingInFileNames": true,    /* Ensure that casing is correct in imports */
+    "isolatedModules": true,                     /* Ensures each file can be safely transpiled without relying on other imports */
+
+    /* Strict Type-Checking Options */
+    "strict": true,                              /* Enable all strict type-checking options */
+    "skipLibCheck": true                         /* Skip type checking of declaration files */
+  },
+  "include": ["src/**/*"],                       /* Compile everything inside the src folder */
+  "exclude": ["node_modules", "dist"]            /* Don't look at dependencies or build outputs */
+}

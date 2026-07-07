@@ -1,0 +1,29 @@
+{
+  "name": "mortal-claude",
+  "version": "1.0.0",
+  "description": "An OpenWhip clone to interrupt runaway Claude tasks",
+  "main": "./dist/index.js",
+  "type": "module",
+  "bin": {
+    "mortal-claudinho": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node ./dist/index.js",
+    "compile": "tsc",
+    "watch": "tsc --watch"
+  },
+  "files": [
+    "dist",
+    "assets",
+    "icon",
+    "sounds"
+  ],
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "chalk": "^5.6.2"
+  }
+}
