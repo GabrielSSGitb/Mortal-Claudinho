@@ -24,13 +24,3 @@ console.log(chalk.yellow('🔄 Starting Claude Code agent under surveillance...\
 
 const fighterInstance = new fighter();
 fighterInstance.initializeOptions();
-
-/* const claudeProcess = spawn('claude', [], {
-    stdio: 'inherit',
-    shell: true
-}); */
-
-/* claudeProcess.on('close', (code) => {
-    console.log(`\n${chalk.blue('Mortal Claudinho:')} Claude process exited with code ${code}`);
-    process.exit(code ?? 0);
-}) */
