@@ -3,6 +3,7 @@ import { spawn } from 'child_process';
 import chalk from 'chalk';
 import boxen from 'boxen';
 import { fighter } from './fighter.js';
+import { activateRightClickListener } from './hitClaudeEvent.js';
 
 const titleText = chalk.white.bold('MORTAL CLAUDINHO\n\n') +
     chalk.gray('The ultimate whip for runaway AI agents.');
@@ -23,4 +24,6 @@ console.log(boxen(titleText, {
 console.log(chalk.yellow('🔄 Starting Claude Code agent under surveillance...\n'));
 
 const fighterInstance = new fighter();
-fighterInstance.initializeOptions();
+await fighterInstance.initializeOptions();
+
+activateRightClickListener();

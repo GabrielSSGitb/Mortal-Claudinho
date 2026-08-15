@@ -1,6 +1,5 @@
 import * as p from '@clack/prompts';
 import chalk from 'chalk';
-import { spawn } from 'child_process';
 import { Scorpion } from './scorpion.js';
 export class fighter {
     async initializeOptions() {
@@ -28,13 +27,14 @@ export class fighter {
                 p.cancel('Operation cancelled. Exiting Mortal Claudinho.');
                 process.exit(0);
         }
-        const claudeProcess = spawn('claude', [], {
-            stdio: 'inherit',
-            shell: true
-        });
-        claudeProcess.on('close', (code) => {
-            console.log(`\n${chalk.blue('Mortal Claudinho:')} Claude process exited with code ${code}`);
-            process.exit(code ?? 0);
-        });
+        /* const claudeProcess = spawn('claude', [], {
+          stdio: 'inherit',
+          shell: true
+      });
+      
+       claudeProcess.on('close', (code) => {
+          console.log(`\n${chalk.blue('Mortal Claudinho:')} Claude process exited with code ${code}`);
+          process.exit(code ?? 0);
+      }); */
     }
 }
