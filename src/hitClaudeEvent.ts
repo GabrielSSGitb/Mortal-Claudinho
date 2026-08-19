@@ -1,6 +1,8 @@
-import {spawn} from "child_process";
-import chalk from "chalk";
-import * as readline from "node:readline";
+#!/usr/bin/env node
+import chalk from 'chalk';
+import boxen from 'boxen';
+import { spawn, ChildProcessWithoutNullStreams } from 'child_process';
+import * as readline from 'node:readline';
 
 const ENABLE_MOUSE = '\x1b[?1000h\x1b[?1006h';
 const DISABLE_MOUSE = '\x1b[?1000l\x1b[?1006l';
@@ -11,47 +13,40 @@ export interface RightClickEvent {
     y: number;
 }
 
-function runClaudeCommand(prompt: string): Promise<String> {
-    return new Promise((resolve, reject) => {
-        console.log(`\n[Claude] Processando: "${prompt}"...`);
+let claudeSession: ChildProcessWithoutNullStreams | null = null;
 
-        const claude = spawn('claude', [
-            '-p', prompt,
-            '--bare',
-            '--dangerously-skip-permissions' // Evita que o Claude trave esperando confirmações interativas
-        ], {
-            stdio: ['pipe', 'pipe', 'pipe'], // Mudamos para 'pipe' no stdin para controlá-lo manualmente
-            shell: process.platform === 'win32',
-            env: {
-                ...process.env,
-                CI: 'true', // Força modo não-interativo
-                NONINTERACTIVE: '1'
-            }
-        });
-
-        // FECHA O STDIN IMEDIATAMENTE
-        // Isso avisa ao Claude no nível de sistema que a entrada de dados acabou
-        claude.stdin.end();
-
-        let output = '';
-        let errorOutput = '';
-
-        claude.stdout.on('data', data => {
-            output += data.toString();
-        });
-
-        claude.stderr.on('data', data => {
-            errorOutput += data.toString();
-        });
-
-        claude.on('close', (code) => {
-            if (code === 0) {
-                resolve(output.trim());
-            }else {
-                reject("Error occurred while processing claude" + errorOutput);
-            }
-        });
+// Initialize a single persistent Claude session
+function startClaudeSession(): ChildProcessWithoutNullStreams {
+    const claude = spawn('claude', ['--dangerously-skip-permissions'], {
+        shell: process.platform === 'win32',
+        env: { ...process.env }
     });
+
+    claude.stdout.on('data', (data) => {
+        // Pipe real-time streaming updates from Claude to terminal output
+        process.stdout.write(chalk.green(data.toString()));
+    });
+
+    claude.stderr.on('data', (data) => {
+        process.stderr.write(chalk.red(data.toString()));
+    });
+
+    claude.on('close', (code) => {
+        console.log(chalk.red(`\n[Claude Session Closed] Exit code: ${code}`));
+    });
+
+    return claude;
+}
+
+// Send input directly into the persistent session's stdin
+function sendToClaudeSession(prompt: string): void {
+    if (!claudeSession || claudeSession.killed) {
+        console.error(chalk.red('Claude session is not running.'));
+        return;
+    }
+
+    console.log(chalk.yellow(`\n[Sending to Active Session]: "${prompt}"`));
+    claudeSession.stdin.write(`${prompt}\n`);
 }
 
 function parseRightClick(data: string): { x: number; y: number } | null {
@@ -78,7 +73,10 @@ export function initListener() {
         process.exit(1);
     }
 
-    // Ativa o modo RAW para ler eventos de mouse
+    // 1. Start the background Claude process
+    claudeSession = startClaudeSession();
+
+    // 2. Enable mouse tracking on terminal input
     stdin.setRawMode(true);
     stdin.resume();
     stdin.setEncoding('utf8');
@@ -87,7 +85,6 @@ export function initListener() {
     let isProcessing = false;
 
     const promptUser = (query: string): Promise<string> => {
-        // Desativa temporariamente o modo raw e o rastreamento do mouse para capturar digitação normal
         stdout.write(DISABLE_MOUSE);
         stdin.setRawMode(false);
 
@@ -99,7 +96,6 @@ export function initListener() {
         return new Promise((resolve) => {
             rl.question(query, (answer) => {
                 rl.close();
-                // Reativa o modo raw e rastreamento do mouse após a digitação
                 stdin.setRawMode(true);
                 stdin.resume();
                 stdout.write(ENABLE_MOUSE);
@@ -118,28 +114,29 @@ export function initListener() {
 
         if (event && !isProcessing) {
             isProcessing = true;
-            console.log(`\n[Mouse] Clique direito detectado em X:${event.x}, Y:${event.y}`);
+            console.log(chalk.magenta(`\n[Mouse] Right click detected at X:${event.x}, Y:${event.y}`));
 
             try {
-                // Solicita o prompt ao usuário dinamicamente
-                const userPrompt = await promptUser(chalk.bold.cyan('\nDigite o comando para o Claude: '));
+                const userPrompt = await promptUser(chalk.bold.cyan('\nDigite a instrução para o Claude: '));
 
                 if (userPrompt.trim()) {
-                    const response = await runClaudeCommand(userPrompt);
-                    console.log(`\n--- Resposta do Claude ---\n${response}\n-------------------------`);
+                    sendToClaudeSession(userPrompt);
                 } else {
-                    console.log(chalk.gray('Nenhum prompt digitado. Operação cancelada.'));
+                    console.log(chalk.gray('Nenhum comando digitado. Operação cancelada.'));
                 }
             } catch (err) {
-                console.error('Erro ao processar comando do Claude:', err);
+                console.error('Erro no evento de clique:', err);
             } finally {
                 isProcessing = false;
-                console.log('\nAguardando próximo clique com o botão direito...');
+                console.log(chalk.gray('\nAguardando próximo clique com o botão direito...'));
             }
         }
     };
 
     const cleanup = () => {
+        if (claudeSession) {
+            claudeSession.kill();
+        }
         stdout.write(DISABLE_MOUSE);
         stdin.setRawMode(false);
         stdin.pause();
@@ -152,3 +149,21 @@ export function initListener() {
 
     console.log('Ouvindo cliques com o botão direito...\n');
 }
+
+// Banner setup
+const titleText = chalk.white.bold('MORTAL CLAUDINHO\n\n') +
+    chalk.gray('The ultimate whip for runaway AI agents.');
+
+console.log(boxen(titleText, {
+    padding: 1,
+    margin: 1,
+    borderStyle: 'round',
+    borderColor: 'red',
+    title: chalk.red.bold(' ⚡ v1.0.0 '),
+    titleAlignment: 'center',
+    textAlignment: 'center'
+}));
+
+console.log(chalk.yellow('🔄 Starting Claude Code agent under surveillance...\n'));
+
+initListener();

@@ -2,6 +2,7 @@
 import chalk from 'chalk';
 import boxen from 'boxen';
 import { initListener } from './hitClaudeEvent.js';
+// Exibe o banner do CLI
 const titleText = chalk.white.bold('MORTAL CLAUDINHO\n\n') +
     chalk.gray('The ultimate whip for runaway AI agents.');
 console.log(boxen(titleText, {
@@ -14,4 +15,5 @@ console.log(boxen(titleText, {
     textAlignment: 'center'
 }));
 console.log(chalk.yellow('🔄 Starting Claude Code agent under surveillance...\n'));
+// Inicializa a escuta de cliques e a sessão do Claude
 initListener();
